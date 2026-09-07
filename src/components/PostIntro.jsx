@@ -1,4 +1,5 @@
 import { Avatar, Stack, Typography, Skeleton, Grid } from "@mui/material";
+import {getAge} from "../helpers/fun";
 
 export default function PostIntro({ loading = false, profileUser = {} }) {
   const age = profileUser.dateOfBirth ? getAge(profileUser.dateOfBirth) : "";
@@ -79,18 +80,4 @@ export default function PostIntro({ loading = false, profileUser = {} }) {
       </Stack>
     </Stack>
   );
-}
-
-function getAge(birthDate) {
-  const today = new Date();
-  const birth = new Date(birthDate);
-
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-
-  return age;
 }

@@ -1,14 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap");
 
 :root {
-  --gradient-border: linear-gradient(
-    135deg,
-    #f89a6e 0%,
-    #f89389 30%,
-    #d572b8 55%,
-    #a256e3 80%,
-    #8749f4 100%
-  );
+  --gradient-border: linear-gradient(135deg,
+      #f89a6e 0%,
+      #f89389 30%,
+      #d572b8 55%,
+      #a256e3 80%,
+      #8749f4 100%);
 
 }
 
@@ -24,19 +22,15 @@
 
 body {
   background:
-    radial-gradient(
-      circle at 30% 20%,
+    radial-gradient(circle at 30% 20%,
       rgba(255, 255, 255, 0.05) 0%,
-      transparent 45%
-    ),
-    linear-gradient(
-      135deg,
+      transparent 45%),
+    linear-gradient(135deg,
       #0c1517 0%,
       #132124 30%,
       #172629 55%,
       #1b2f32 80%,
-      #091214 100%
-    );
+      #091214 100%);
   color: #ffffff;
 }
 
@@ -49,16 +43,15 @@ body {
 
 .login {
   /* background-color: #ff1164; */
-  background: linear-gradient(
-    135deg,
-    #f89a6e 0%,
-    #f89389 30%,
-    #d572b8 55%,
-    #a256e3 80%,
-    #8749f4 100%
-  );
+  background: linear-gradient(135deg,
+      #f89a6e 0%,
+      #f89389 30%,
+      #d572b8 55%,
+      #a256e3 80%,
+      #8749f4 100%);
   min-height: 100vh;
   padding: 20px;
+  width: 25%;
 }
 
 /* .main{
@@ -78,6 +71,7 @@ button {
   display: flex;
   background: #000;
 }
+
 .sidebar {
   position: fixed;
   left: 0;
@@ -91,27 +85,32 @@ button {
   display: flex;
   flex-direction: column;
 }
+
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 10px 38px;
 }
+
 .brandLogo {
   width: 30px;
   height: 30px;
 }
+
 .brandText {
   font-family: cursive !important;
   font-size: 25px !important;
   font-weight: 600 !important;
 }
+
 .desktopNav {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
+
 .navItem {
   min-height: 50px;
   display: flex;
@@ -121,18 +120,23 @@ button {
   border-radius: 10px;
   cursor: pointer;
 }
+
 .navItem:hover {
   background: #2d2c2c;
 }
+
 .navItem svg {
   font-size: 27px;
 }
+
 .navItem p {
   font-size: 15px;
 }
+
 .navItem.active p {
   font-weight: 700;
 }
+
 .bottomSidebar {
   margin-top: auto;
 }
@@ -141,10 +145,12 @@ button {
   width: 100%;
   margin-left: 245px;
 }
+
 .feed {
   width: min(600px, calc(100% - 32px));
   margin: 20px auto 50px;
 }
+
 .filter {
   height: 70px;
   display: flex;
@@ -154,9 +160,11 @@ button {
   padding: 4px 8px 16px;
   scrollbar-width: none;
 }
+
 .filter::-webkit-scrollbar {
   display: none;
 }
+
 .filter {
   display: flex;
   align-items: flex-start;
@@ -171,6 +179,7 @@ button {
   border-radius: 0 !important;
   overflow: hidden;
 }
+
 .postImage {
   display: block;
   width: 100%;
@@ -178,6 +187,7 @@ button {
   max-height: 760px;
   object-fit: cover;
 }
+
 .post .MuiIconButton-root {
   color: #111;
 }
@@ -191,18 +201,22 @@ button {
     width: 74px;
     padding: 24px 10px;
   }
+
   .brand {
     justify-content: center;
     padding: 0 0 38px;
   }
+
   .brandText,
   .navItem p {
     display: none;
   }
+
   .navItem {
     justify-content: center;
     padding: 0;
   }
+
   .feedArea {
     margin-left: 74px;
   }
@@ -212,34 +226,42 @@ button {
   .sidebar {
     display: none;
   }
+
   .feedArea {
     margin-left: 0;
     padding-bottom: 58px;
   }
+
   .feed {
     width: 100%;
     margin: 0 auto;
   }
+
   .filter {
     height: 105px;
     gap: 14px;
     padding: 12px 12px 10px;
   }
+
   .story,
   .storyRing {
     min-width: 62px;
     width: 62px;
     height: 62px;
   }
+
   .storyName {
     max-width: 62px;
   }
+
   .post {
     margin-top: 0;
   }
+
   .postImage {
     max-height: none;
   }
+
   .mobileNav {
     position: fixed;
     display: flex;
@@ -254,6 +276,7 @@ button {
     z-index: 20;
     background: rgba(255, 255, 255, 0.98);
   }
+
   .mobileNav .MuiIconButton-root {
     color: #111;
   }
@@ -263,14 +286,80 @@ button {
   .filter {
     gap: 11px;
   }
+
   .post .MuiIconButton-root {
     padding: 8px;
   }
+
   .postImage {
     width: 100%;
   }
 }
 
-.gradientIcon{
+.gradientIcon {
   cursor: pointer;
+}
+
+.picture-card {
+  min-height: 250px;
+  width: 100%;
+  display: inline-block;
+  padding: 0px;
+  color: #fff;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  border-radius: 6px !important;
+  background: #0c1517;
+  /* border-image: linear-gradient(135deg, #0026ff 0%, #8749f4 30%, #a13ac3 55%, #ff6c5f 70%, #f13232 100%) 1; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picture-card img {
+  width: 100%;
+  display: block;
+  height: auto;
+  max-height: 230px;
+  object-fit: cover;
+  align-items: center;
+  justify-content: center;
+}
+
+.th-input {
+  width: 90%;
+  min-height: 100px;
+  padding: 10px;
+  /* margin: 10px; */
+  border-radius: 5px;
+  border: none;
+  background-color: transparent;
+  background-image: linear-gradient(135deg, #0026ff 0%, #8749f4 30%, #a13ac3 55%, #ff6c5f 70%, #f13232 100%);
+  background-position: 0 bottom;
+  background-repeat: no-repeat;
+  background-size: 200% 1px;
+  transition: background-position 400ms ease-out;
+  color: #fff;
+  font-family: "Urbanist", sans-serif;
+  font-size: 14px;
+}
+
+.th-input::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+
+.th-input:focus {
+  outline: none;
+  background-position: 100% bottom;
+}
+
+.user-profile-journey{
+  min-height: 100vh;
+  width: 100%;
+  background: url('/leaf_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }

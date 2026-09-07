@@ -1,21 +1,18 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import "./App.css";
-
 import Login from "./pages/Login";
-
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
-
 import Main from "./pages/Main";
 import Profile from "./pages/Profile";
 import Message from "./pages/Message";
 import Explore from "./pages/Explore";
 import Search from "./pages/Search";
-
 import { useEffect } from "react";
 import { useAuthStore } from "./store/authStore";
 import { refreshToken } from "./api/authApi";
+
+
 
 export default function App() {
   const { login, setLoading } = useAuthStore();

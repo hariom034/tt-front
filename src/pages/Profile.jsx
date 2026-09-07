@@ -7,6 +7,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { apiGet } from "../api/api";
 import { useAuthStore } from "../store/authStore";
+import EditProfile from "../components/EditProfile";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -62,65 +63,7 @@ export default function Profile() {
             <Skeleton variant="rounded" width={210} height={60} />
           </Stack>
         ) : isEditing ? (
-          // <h1>Testing 2</h1>
-
-          <Box className="feed">
-            <Stack
-              direction="row"
-              // alignItems="center"
-              // justifyContent="center"
-              spacing={1}
-              sx={{
-                width: "100%",
-                justifyContent: "space-between",
-                alignItems: "center",
-                // textAlign: "center",
-                mb: 1,
-              }}
-            >
-              <div style={{ width: "33%", textAlign: "left" }}>
-                <ArrowBackIcon
-                  className="gradientIcon"
-                  onClick={handleBack}
-                  sx={{ cursor: "pointer" }}
-                />
-              </div>
-
-              <div style={{ width: "33%", textAlign: "center" }}>
-                <b>Edit Profile</b>
-              </div>
-
-              <div style={{ width: "34%", textAlign: "right" }}>
-                {/* <div style={{float: "right"}}> */}
-                <p>save</p>
-                {/* </div> */}
-              </div>
-
-              <Box sx={{ width: 24 }} />
-            </Stack>
-
-            <Divider sx={{ display: { xs: "none", sm: "block" } }} />
-
-            {/* Your Edit Profile component */}
-            <Grid container spacing={2}>
-              <Grid size={4}>
-                <span 
-                  style={{
-                    cursor: "pointer",
-                    display: "inline-block",
-                    padding: "6px",
-                    color: "#fff",
-                    fontWeight: 600,s
-                    transition: "all 0.3s ease",
-                    border: "3px solid transparent",
-                    borderImage: "linear-gradient(90deg, #0026ff 0%, #8749f4 30%, #a13ac3 55%, #ff6c5f 70%, #f13232 100%) 1",
-                  }}
-                >
-                   sdfsdfds  
-                </span>
-              </Grid>
-            </Grid>
-          </Box>
+          <EditProfile loading={loading} profileData={profileUser} handleBack={handleBack} />
         ) : (
           <Box className="feed">
             <Stack

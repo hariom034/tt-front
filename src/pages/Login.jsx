@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography, Divider, Grid, Skeleton, Stack } from "@mui/material";
 import { sendOtp, verifyOtp } from "../api/authApi";
 import { useAuthStore } from "../store/authStore";
-import Grid from "@mui/material/Grid";
+import { inputStyle } from "../helpers/styleHelper";
+
 
 export default function Login() {
   const navigate = useNavigate();
@@ -14,36 +15,6 @@ export default function Login() {
   const [step, setStep] = useState("email");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const inputStyle = {
-    "& .MuiFilledInput-root": {
-      backgroundColor: "rgba(255,255,255,0.08)",
-      "&:hover": {
-        backgroundColor: "rgba(255,255,255,0.12) !important",
-      },
-      "&.Mui-focused": {
-        backgroundColor: "rgba(255,255,255,0.12) !important",
-      },
-      "&:before": {
-        borderBottom: "1px solid rgba(255,255,255,0.5)",
-      },
-      "&:hover:not(.Mui-disabled, .Mui-error):before": {
-        borderBottom: "2px solid #ffffff",
-      },
-      "&:after": {
-        borderBottom: "2px solid #ffffff",
-      },
-    },
-    "& .MuiInputLabel-root": {
-      color: "#ffffff",
-    },
-    "& .MuiInputLabel-root.Mui-focused": {
-      color: "#ffffff",
-    },
-    "& .MuiFilledInput-input": {
-      color: "#ffffff",
-    },
-  };
 
   const handleSendOtp = async () => {
     if (!email.trim()) {
@@ -91,13 +62,18 @@ export default function Login() {
   };
 
   return (
-    <Grid container>
-      <Grid
-        item
-        md={8}
+    <Box className="login-page">
+
+      <Stack
+        direction="row"
         sx={{
-          p: 0,
-          m: 0,
+          width: "100%",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}
+      >
+        <div style={{
+          width: "100%",
           minHeight: "100vh",
           position: "relative",
           backgroundImage: "url('/leaf_bg.png')",
@@ -107,16 +83,29 @@ export default function Login() {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-        }}
-      >
-        <img
-          src="/logo.png"
-          alt="Background"
-          style={{ width: "290px", height: "300px" }}
-        />
-      </Grid>
+        }}>
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            top: "20px",
+            left: "20px",
+            color: "#ffffff",
+            fontSize: "24px",
+            fontWeight: "bold",
+          }}>
+            <img
+              src="/logo.png"
+              alt="Background"
+              style={{ width: "160px", height: "150px" }}
+              />
+            <h2 style={{ color: "#ffffff", margin: "0" }}>Velora</h2>
+          </div>
 
-      <Grid item md={4} sx={{ p: 0, m: 0 }}>
+        </div>
+
+
+
         <div className="login">
           <Typography variant="h4" sx={{ color: "#ffffff", mb: 2 }}>
             Login
@@ -199,7 +188,36 @@ export default function Login() {
             </>
           )}
         </div>
-      </Grid>
-    </Grid>
+
+      </Stack>
+
+      {/* <Grid container
+        sx={{
+          width: "100%"
+        }}>
+        <Grid
+          item
+          md={8}
+          sx={{
+            p: 0,
+            m: 0,
+            minHeight: "100vh",
+            position: "relative",
+            backgroundImage: "url('/leaf_bg.png')",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            backgroundSize: "cover",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+         
+        </Grid>
+
+        <Grid item md={4} sx={{ p: 0, m: 0 }}>
+        </Grid>
+      </Grid> */}
+    </Box>
   );
 }

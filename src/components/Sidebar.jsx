@@ -9,15 +9,31 @@ import {
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import { userLogout } from "../api/authApi";
 
 
 export default function Sidebar() {
 
   const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
 
   const navigateProfile = () => {
     navigate("/profile");
   };
+
+  const handleLogOut = async () => {
+
+    try {
+      const response = await userLogout();
+      logout();
+    } catch (err) {
+      // setMessage(err?.response?.data?.message || "Invalid OTP. Please try again.",);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
 
   const navItems = [
     {
@@ -72,7 +88,7 @@ export default function Sidebar() {
       </Stack>
 
       <Stack spacing={1.2} className="bottomSidebar">
-        <Box className="navItem">
+        <Box className="navItem" onClick={handleLogOut}>
           <SettingsOutlined />
           <Typography>More</Typography>
         </Box>
