@@ -58,6 +58,8 @@ function CompleteProfile({ profileUser }) {
                         <Media profileUser={profileUser} />
                     ) : stage === "career" ? (
                         <Career profileUser={profileUser} />
+                    ) : stage === "lifestyle" ? (
+                        <Lifestyle />
                     ) : (
                         <Typography sx={{ color: "#fff" }}>Profile completion stage: {stage}</Typography>
                     )}
@@ -964,7 +966,7 @@ function Career({ profileUser }) {
                 />
 
                 <TextField
-                    label="Title you want to become?"
+                    label="Title you want to get?"
                     name="toBecome"
                     value={formData.toBecome}
                     onChange={handleChange}
@@ -999,6 +1001,62 @@ function Career({ profileUser }) {
                     {submitting ? "Saving..." : "Save Profile"}
                 </Button>
             </Box>
+        </Box>
+    );
+}
+
+function Lifestyle() {
+    const [formDetails, setFormDetails] = useState(null);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    useEffect(() => {
+        const fetchFormDetails = async () => {
+            try {
+                const response = await apiGet("/get/user-form", { page: "lifestyle" });
+                const details = response?.data?.data || {};
+
+                // Keep this while the Lifestyle fields are being wired up.
+                console.log("Lifestyle form details:", details);
+                setFormDetails(details);
+            } catch (error) {
+                setErrorMessage(
+                    error?.response?.data?.message || "Unable to load lifestyle form details right now."
+                );
+            }
+        };
+
+        fetchFormDetails();
+    }, []);
+
+    return (
+        <Box sx={{ width: "100%" }}>
+            <Typography
+                variant="h3"
+                sx={{
+                    mb: 1,
+                    fontWeight: 800,
+                    display: "inline-block",
+                    background: "linear-gradient(135deg, #f9c6ff 0%, #a5f3fc 28%, #c4b5fd 55%, #f9a8d4 100%)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                    paddingBottom: 1.5,
+                    borderBottom: "3px solid transparent",
+                    borderImage:
+                        "linear-gradient(135deg, transparent 1%, #546efd 10%, #a377f0 30%, #be7fd3 55%, #df8880 70%, #ff7070 90%, transparent 100%) 1",
+                    borderImageSlice: 1,
+                }}
+            >
+                Lifestyle
+            </Typography>
+
+            {errorMessage ? (
+                <Typography sx={{ mt: 2, color: "#ffb4b4" }}>{errorMessage}</Typography>
+            ) : (
+                <Typography sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.7 }}>
+                    {formDetails ? "Lifestyle form details have been logged to the console." : "Loading lifestyle form details..."}
+                </Typography>
+            )}
         </Box>
     );
 }
