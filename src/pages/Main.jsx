@@ -40,13 +40,13 @@ export default function Main() {
   }
 
   if (profileUser?.profileStage == "completed") {
-    return <Welcome />;
+    return <Welcome profileUser={profileUser} loading={loading} />;
   }else {
     return <CompleteProfile profileUser={profileUser} />;
   }
 }
 
-function Welcome() {
+function Welcome({ profileUser = {}, loading = false }) {
   return (
     <Box className="app">
       <Sidebar />
@@ -55,7 +55,7 @@ function Welcome() {
         <Box className="feed">
           <Filter />
           <Divider sx={{ display: { xs: "none", sm: "block" } }} />
-          <PostCard />
+          <PostCard loading={loading} profileUser={profileUser} />
         </Box>
       </Box>
 

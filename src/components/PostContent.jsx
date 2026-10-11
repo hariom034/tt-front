@@ -11,8 +11,7 @@ import {
   WorkOutlineOutlined,
   WcOutlined,
 } from "@mui/icons-material";
-import { useEffect, useState } from "react";
-import { apiGet } from "../api/api";
+import { useState } from "react";
 
 const tabs = [
   { label: "About", page: "about" },
@@ -22,42 +21,15 @@ const tabs = [
 
 export default function PostContent({ loading = false, profileUser = {} }) {
   const [activeTab, setActiveTab] = useState("about");
-  const [tabData, setTabData] = useState({});
-  const [tabLoading, setTabLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchTabContent = async () => {
-      if (loading) return;
-
-      setTabLoading(true);
-
-      try {
-        const response = await apiGet("/get/profile-details", {
-          page: activeTab,
-          userId: profileUser?.userId || profileUser?._id,
-        });
-
-        const data = response?.data?.data ?? {};
-        setTabData((prev) => ({ ...prev, [activeTab]: data }));
-      } catch (error) {
-        console.error("Error fetching tab content:", error);
-        setTabData((prev) => ({ ...prev, [activeTab]: {} }));
-      } finally {
-        setTabLoading(false);
-      }
-    };
-
-    fetchTabContent();
-  }, [activeTab, loading, profileUser?._id, profileUser?.userId]);
 
   const renderTabContent = (activePage) => {
     switch (activePage) {
       case "about":
-        return <About loading={tabLoading} profileUser={tabData[activePage] || profileUser} />;
+        return <About loading={loading} profileUser={profileUser} />;
       case "interest":
-        return <Interest loading={tabLoading} profileUser={tabData[activePage] || profileUser} />;
+        return <Interest loading={loading} profileUser={profileUser} />;
       case "lifestyle":
-        return <Lifestyle loading={tabLoading} profileUser={tabData[activePage] || profileUser} />;
+        return <Lifestyle loading={loading} profileUser={profileUser} />;
       default:
         return null;
     }

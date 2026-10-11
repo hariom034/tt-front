@@ -28,7 +28,7 @@ export default function Profile() {
     try {
       setLoading(true);
       const getProfileRes = (
-        await apiGet("/get/profile-details", { userId: userId })
+        await apiGet("/get/profile-details")
       ).data;
 
       if (getProfileRes.success) {
