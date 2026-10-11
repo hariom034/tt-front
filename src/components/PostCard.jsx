@@ -1,8 +1,11 @@
 import { Box, Paper } from '@mui/material';
 import PostIntro from './PostIntro';
 import PostContent from './PostContent';
+import PostMedia from './PostMedia';
 
 export default function PostCard({ loading = false, profileUser = {} }) {
+
+
 
   return (
     <Paper className="post" elevation={1}>
@@ -10,6 +13,7 @@ export default function PostCard({ loading = false, profileUser = {} }) {
       
       <PostIntro loading={loading} profileUser={profileUser} />
       <PostContent loading={loading} profileUser={profileUser} />
+      <PostMedia loading={loading} profileUser={profileUser} />
     </Paper>
   );
 }

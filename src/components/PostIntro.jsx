@@ -3,7 +3,7 @@ import {getAge} from "../helpers/fun";
 
 export default function PostIntro({ loading = false, profileUser = {} }) {
   const age = profileUser.dateOfBirth ? getAge(profileUser.dateOfBirth) : "";
-  const distance = "16 KM";
+  const gender = profileUser.gender ? profileUser.gender : "" ;
 
   return (
     <Stack
@@ -72,7 +72,7 @@ export default function PostIntro({ loading = false, profileUser = {} }) {
                 {age}
               </Typography>
               <Typography fontSize={12} color="textSecondary">
-                {distance}
+                {gender ? gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase() : ""}
               </Typography>
             </div>
           </>

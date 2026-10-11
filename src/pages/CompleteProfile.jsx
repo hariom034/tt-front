@@ -9,12 +9,16 @@ import {
     RadioGroup,
     FormControlLabel,
     Radio,
+    Checkbox,
     Chip,
     IconButton,
+    Slider,
 } from "@mui/material";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayCircleOutlinedIcon from "@mui/icons-material/PlayCircleOutlined";
+import CheckBoxOutlineBlankOutlinedIcon from "@mui/icons-material/CheckBoxOutlineBlankOutlined";
+import CheckBoxOutlinedIcon from "@mui/icons-material/CheckBoxOutlined";
 import { inputStyle } from "../helpers/styleHelper";
 import { apiGet, apiPost } from "../api/api";
 import { useAuthStore } from "../store/authStore";
@@ -50,6 +54,8 @@ function CompleteProfile({ profileUser }) {
                         <Primary profileUser={profileUser} />
                     ) : stage === "gender" ? (
                         <Gender profileUser={profileUser} />
+                    ) : stage === "preferences" || stage === "prefreance" || stage === "looking_for" || stage === "lookingFor" ? (
+                        <LookinFor profileUser={profileUser} />
                     ) : stage === "about" ? (
                         <About profileUser={profileUser} />
                     ) : stage === "personal" ? (
@@ -58,6 +64,8 @@ function CompleteProfile({ profileUser }) {
                         <Media profileUser={profileUser} />
                     ) : stage === "career" ? (
                         <Career profileUser={profileUser} />
+                    ) : stage === "interest" ? (
+                        <Interest />
                     ) : stage === "lifestyle" ? (
                         <Lifestyle />
                     ) : (
@@ -434,6 +442,161 @@ function Gender({ profileUser }) {
                     }}
                 >
                     {submitting ? "Saving..." : "Save Profile"}
+                </Button>
+            </Box>
+        </Box>
+    );
+}
+
+function Preference({ profileUser }) {
+    const [selectedPreferences, setSelectedPreferences] = useState(() => {
+        const savedPreference = profileUser?.preference;
+        return Array.isArray(savedPreference) ? savedPreference : savedPreference ? [savedPreference] : [];
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [formPuts, setFormPuts] = useState({ preference: [] });
+
+    useEffect(() => {
+        const fetchFormOptions = async () => {
+            try {
+                const response = await apiGet("/get/user-form", { page: "preference" });
+
+                if (response?.data?.success) {
+                    setFormPuts(response.data.data || {});
+                }
+            } catch (error) {
+                setErrorMessage(
+                    error?.response?.data?.message || "Unable to load preference options right now."
+                );
+            }
+        };
+
+        fetchFormOptions();
+    }, []);
+
+    const preferenceOptions = Array.isArray(formPuts.preference)
+        ? formPuts.preference
+        : Array.isArray(formPuts.genders)
+            ? formPuts.genders
+            : [];
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        if (!selectedPreferences.length) {
+            setErrorMessage("Please select at least one preference.");
+            return;
+        }
+
+        setSubmitting(true);
+        setErrorMessage("");
+
+        try {
+            const response = await apiPost("/send/user-details", {
+                page: "preference",
+                preference: selectedPreferences,
+            });
+
+            if (response?.data?.success) {
+                window.location.reload();
+                return;
+            }
+
+            setErrorMessage(response?.data?.message || "Unable to save your preference right now.");
+        } catch (error) {
+            setErrorMessage(
+                error?.response?.data?.message || "Something went wrong while saving your preference."
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
+            <Typography
+                variant="h3"
+                sx={{
+                    mb: 1,
+                    fontWeight: 800,
+                    display: "inline-block",
+                    background: "linear-gradient(135deg, #f9c6ff 0%, #a5f3fc 28%, #c4b5fd 55%, #f9a8d4 100%)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                    paddingBottom: 1.5,
+                    borderBottom: "3px solid transparent",
+                    borderImage:
+                        "linear-gradient(135deg, transparent 1%, #546efd 10%, #a377f0 30%, #be7fd3 55%, #df8880 70%, #ff7070 90%, transparent 100%) 1",
+                    borderImageSlice: 1,
+                }}
+            >
+                Your Preference
+            </Typography>
+            <Typography sx={{ mb: 3, color: "rgba(255,255,255,0.75)", lineHeight: 1.7 }}>
+                Tell us who you would like to connect with. Select all that apply.
+            </Typography>
+
+            <FormControl component="fieldset" sx={{ width: "100%" }}>
+                <Stack spacing={1.25}>
+                    {preferenceOptions.map((preference) => {
+                        const checked = selectedPreferences.includes(preference);
+
+                        return (
+                            <FormControlLabel
+                                key={preference}
+                                control={
+                                    <Checkbox
+                                        checked={checked}
+                                        onChange={() =>
+                                            setSelectedPreferences((currentPreferences) =>
+                                                checked
+                                                    ? currentPreferences.filter((value) => value !== preference)
+                                                    : [...currentPreferences, preference]
+                                            )
+                                        }
+                                        sx={{
+                                            color: "rgba(255,255,255,0.8)",
+                                            "&.Mui-checked": { color: "#ffffff" },
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <Typography sx={{ color: "rgba(255,255,255,0.9)" }}>
+                                        {preference.charAt(0).toUpperCase() + preference.slice(1)}
+                                    </Typography>
+                                }
+                                sx={{ marginLeft: 0, marginRight: 0 }}
+                            />
+                        );
+                    })}
+                </Stack>
+            </FormControl>
+
+            {errorMessage ? (
+                <Typography sx={{ mt: 2, color: "#ffb4b4" }}>{errorMessage}</Typography>
+            ) : null}
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={submitting}
+                    sx={{
+                        px: 4,
+                        py: 1.2,
+                        borderRadius: 2,
+                        background: "linear-gradient(135deg, #546efd 0%, #a377f0 35%, #f48fb1 100%)",
+                        boxShadow: "0 16px 28px rgba(99, 102, 241, 0.35)",
+                        fontWeight: 700,
+                        textTransform: "none",
+                        "&:hover": {
+                            background: "linear-gradient(135deg, #5c73ff 0%, #9a74f5 35%, #f59ec3 100%)",
+                        },
+                    }}
+                >
+                    {submitting ? "Saving..." : "Save Preference"}
                 </Button>
             </Box>
         </Box>
@@ -1005,31 +1168,99 @@ function Career({ profileUser }) {
     );
 }
 
+function Interest() {
+    return <InterestSelectionForm page="interest" title="Interest" />;
+}
+
 function Lifestyle() {
+    return <InterestSelectionForm page="lifestyle" title="Lifestyle" />;
+}
+
+function InterestSelectionForm({ page, title }) {
     const [formDetails, setFormDetails] = useState(null);
+    const [selectedInterests, setSelectedInterests] = useState({});
+    const [submitting, setSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
         const fetchFormDetails = async () => {
             try {
-                const response = await apiGet("/get/user-form", { page: "lifestyle" });
+                const response = await apiGet("/get/user-form", { page });
                 const details = response?.data?.data || {};
 
-                // Keep this while the Lifestyle fields are being wired up.
-                console.log("Lifestyle form details:", details);
                 setFormDetails(details);
             } catch (error) {
                 setErrorMessage(
-                    error?.response?.data?.message || "Unable to load lifestyle form details right now."
+                    error?.response?.data?.message || `Unable to load ${title.toLowerCase()} form details right now.`
                 );
             }
         };
 
         fetchFormDetails();
-    }, []);
+    }, [page, title]);
+
+    const interests = Array.isArray(formDetails?.interests) ? formDetails.interests : [];
+
+    const handleInterestSelect = (interest, interestValue) => {
+        const interestId = String(interest.id);
+        const valueId = interestValue.id;
+
+        setSelectedInterests((previousSelections) => {
+            const selectedValues = previousSelections[interestId] || [];
+            const isSelected = selectedValues.includes(valueId);
+            const nextSelectedValues = interest.allowMultiple
+                ? isSelected
+                    ? selectedValues.filter((id) => id !== valueId)
+                    : [...selectedValues, valueId]
+                : isSelected
+                    ? []
+                    : [valueId];
+
+            if (nextSelectedValues.length) {
+                return { ...previousSelections, [interestId]: nextSelectedValues };
+            }
+
+            const { [interestId]: removedInterest, ...remainingSelections } = previousSelections;
+            return remainingSelections;
+        });
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        if (!Object.values(selectedInterests).some((selectedValues) => selectedValues.length)) {
+            setErrorMessage("Please select at least one interest.");
+            return;
+        }
+
+        setSubmitting(true);
+        setErrorMessage("");
+
+        try {
+            const payload = {
+                page,
+                interests: selectedInterests,
+            };
+
+            const response = await apiPost("/send/user-details", payload);
+
+            if (response?.data?.success) {
+                window.location.reload();
+                return;
+            }
+
+            setErrorMessage(response?.data?.message || `Unable to save your ${title.toLowerCase()} details right now.`);
+        } catch (error) {
+            setErrorMessage(
+                error?.response?.data?.message || `Something went wrong while saving your ${title.toLowerCase()} details.`
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
-        <Box sx={{ width: "100%" }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
             <Typography
                 variant="h3"
                 sx={{
@@ -1047,16 +1278,118 @@ function Lifestyle() {
                     borderImageSlice: 1,
                 }}
             >
-                Lifestyle
+                {title}
             </Typography>
+
+            {!formDetails ? (
+                <Typography sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.7 }}>
+                    Loading {title.toLowerCase()} form details...
+                </Typography>
+            ) : interests.length ? (
+                <Stack spacing={2.5} sx={{ mt: 2.5 }}>
+                    {interests.map((interest) => {
+                        const interestId = String(interest.id);
+                        const selectedValues = selectedInterests[interestId] || [];
+                        const interestValues = Array.isArray(interest.interestValues)
+                            ? interest.interestValues
+                            : [];
+
+                        return (
+                            <Box key={interest.id}>
+                                <Typography sx={{ color: "#fff", fontSize: 16, mb: 1 }}>
+                                    {interest.name}
+                                </Typography>
+                                {interest.allowMultiple ? (
+                                    <Typography
+                                        sx={{ color: "rgba(255,255,255,0.6)", fontSize: 13, mb: 1 }}
+                                    >
+                                        Select all that apply
+                                    </Typography>
+                                ) : null}
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                                    {interestValues.map((interestValue) => {
+                                        const selected = selectedValues.includes(interestValue.id);
+
+                                        return (
+                                            <Chip
+                                                key={interestValue.id}
+                                                label={interestValue.value}
+                                                icon={
+                                                    interest.allowMultiple ? (
+                                                        selected ? (
+                                                            <CheckBoxOutlinedIcon />
+                                                        ) : (
+                                                            <CheckBoxOutlineBlankOutlinedIcon />
+                                                        )
+                                                    ) : undefined
+                                                }
+                                                onClick={() => handleInterestSelect(interest, interestValue)}
+                                                clickable
+                                                aria-pressed={selected}
+                                                aria-label={`${interestValue.value}${
+                                                    interest.allowMultiple ? ", selectable with other options" : ""
+                                                }`}
+                                                sx={{
+                                                    background: selected
+                                                        ? "linear-gradient(135deg, #546efd 0%, #a377f0 50%, #f48fb1 100%)"
+                                                        : "rgba(255, 255, 255, 0)",
+                                                    color: selected ? "#fff" : "rgba(255,255,255,0.75)",
+                                                    border: selected
+                                                        ? "1px solid transparent"
+                                                        : "1px solid rgba(255,255,255,0.25)",
+                                                    boxShadow: selected ? "0 8px 30px rgba(83,63,255,0.14)" : "none",
+                                                    transition:
+                                                        "background 280ms ease, color 280ms ease, border-color 280ms ease, box-shadow 280ms ease",
+                                                    "& .MuiChip-icon": {
+                                                        color: selected ? "#fff" : "rgba(255,255,255,0.75)",
+                                                        fontSize: 17,
+                                                        transition: "color 280ms ease, transform 280ms ease",
+                                                        animation: "checkbox-state 280ms ease",
+                                                    },
+                                                    "@keyframes checkbox-state": {
+                                                        "0%": { opacity: 0.45, transform: "scale(0.78)" },
+                                                        "100%": { opacity: 1, transform: "scale(1)" },
+                                                    },
+                                                }}
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            </Box>
+                        );
+                    })}
+
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 0.5 }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={submitting}
+                            sx={{
+                                px: 4,
+                                py: 1.2,
+                                borderRadius: 2,
+                                background: "linear-gradient(135deg, #546efd 0%, #a377f0 35%, #f48fb1 100%)",
+                                boxShadow: "0 16px 28px rgba(99, 102, 241, 0.35)",
+                                fontWeight: 700,
+                                textTransform: "none",
+                                "&:hover": {
+                                    background: "linear-gradient(135deg, #5c73ff 0%, #9a74f5 35%, #f59ec3 100%)",
+                                },
+                            }}
+                        >
+                            {submitting ? "Saving..." : `Save ${title}`}
+                        </Button>
+                    </Box>
+                </Stack>
+            ) : (
+                <Typography sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.7 }}>
+                    No {title.toLowerCase()} options are available yet.
+                </Typography>
+            )}
 
             {errorMessage ? (
                 <Typography sx={{ mt: 2, color: "#ffb4b4" }}>{errorMessage}</Typography>
-            ) : (
-                <Typography sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.7 }}>
-                    {formDetails ? "Lifestyle form details have been logged to the console." : "Loading lifestyle form details..."}
-                </Typography>
-            )}
+            ) : null}
         </Box>
     );
 }
@@ -1081,14 +1414,13 @@ const getSelectedFileType = (file) => {
     return null;
 };
 
-const readFileAsDataUrl = (file) =>
-    new Promise((resolve, reject) => {
-        const reader = new FileReader();
-
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-    });
+const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+});
 
 const getMediaUrl = (media) => {
     if (typeof media === "string") return media;
@@ -1437,5 +1769,265 @@ function Media({ profileUser }) {
     );
 }
 
+
+function LookinFor({ profileUser }) {
+    const [selectedLookingFor, setSelectedLookingFor] = useState(() => {
+        const savedLookingFor = profileUser?.lookingFor;
+        return Array.isArray(savedLookingFor)
+            ? savedLookingFor
+            : savedLookingFor
+                ? [savedLookingFor]
+                : [];
+    });
+    const [minAgePreference, setMinAgePreference] = useState(
+        profileUser?.minAgePreference !== undefined && profileUser?.minAgePreference !== null
+            ? Number(profileUser.minAgePreference)
+            : 18
+    );
+    const [maxAgePreference, setMaxAgePreference] = useState(
+        profileUser?.maxAgePreference !== undefined && profileUser?.maxAgePreference !== null
+            ? Number(profileUser.maxAgePreference)
+            : 35
+    );
+    const [submitting, setSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [formPuts, setFormPuts] = useState({ lookingFor: [], relationshipTypes: [], preference: [] });
+
+    useEffect(() => {
+        const fetchFormOptions = async () => {
+            try {
+                const response = await apiGet("/get/user-form", { page: "looking_for" });
+
+                if (response?.data?.success) {
+                    setFormPuts(response.data.data || {});
+                }
+            } catch (error) {
+                setErrorMessage(
+                    error?.response?.data?.message || "Unable to load preference options right now."
+                );
+            }
+        };
+
+        fetchFormOptions();
+    }, []);
+
+    const preferenceOptions = Array.isArray(formPuts.relationshipTypes)
+        ? formPuts.relationshipTypes
+        : Array.isArray(formPuts.lookingFor)
+            ? formPuts.lookingFor
+            : Array.isArray(formPuts.preference)
+                ? formPuts.preference
+                : Array.isArray(formPuts.genders)
+                    ? formPuts.genders
+                    : [];
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        const parsedMinAge = Number(minAgePreference);
+        const parsedMaxAge = Number(maxAgePreference);
+
+        if (!selectedLookingFor.length) {
+            setErrorMessage("Please select at least one looking-for option.");
+            return;
+        }
+
+        if (Number.isNaN(parsedMinAge) || parsedMinAge < 18) {
+            setErrorMessage("Minimum age preference is required and must be at least 18.");
+            return;
+        }
+
+        if (Number.isNaN(parsedMaxAge) || parsedMaxAge > 55) {
+            setErrorMessage("Max age preference is required and cannot be higher than 55.");
+            return;
+        }
+
+        if (parsedMinAge > parsedMaxAge) {
+            setErrorMessage("Minimum age cannot be greater than maximum age.");
+            return;
+        }
+
+        setSubmitting(true);
+        setErrorMessage("");
+
+        try {
+            const response = await apiPost("/send/user-details", {
+                page: "looking_for",
+                lookingFor: selectedLookingFor,
+                minAgePreference: parsedMinAge,
+                maxAgePreference: parsedMaxAge,
+            });
+
+            if (response?.data?.success) {
+                window.location.reload();
+                return;
+            }
+
+            setErrorMessage(response?.data?.message || "Unable to save your preference right now.");
+        } catch (error) {
+            setErrorMessage(
+                error?.response?.data?.message || "Something went wrong while saving your preference."
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
+            <Typography
+                variant="h3"
+                sx={{
+                    mb: 1,
+                    fontWeight: 800,
+                    display: "inline-block",
+                    background: "linear-gradient(135deg, #f9c6ff 0%, #a5f3fc 28%, #c4b5fd 55%, #f9a8d4 100%)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                    paddingBottom: 1.5,
+                    borderBottom: "3px solid transparent",
+                    borderImage:
+                        "linear-gradient(135deg, transparent 1%, #546efd 10%, #a377f0 30%, #be7fd3 55%, #df8880 70%, #ff7070 90%, transparent 100%) 1",
+                    borderImageSlice: 1,
+                }}
+            >
+                Nature & Age
+            </Typography>
+            <Typography sx={{ mb: 3, color: "rgba(255,255,255,0.75)", lineHeight: 1.7 }}>
+                Select the nature you are trying to connect with and the age range you that will be match.
+            </Typography>
+
+            <Stack spacing={4} sx={{ width: "100%" }}>
+                <Box sx={{ width: "100%", mt: 0.5 }}>
+                    <Typography sx={{ color: "#fff", fontSize: 16, mb: 1.5 }}>Looking for</Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                        {preferenceOptions.map((preference) => {
+                            const optionValue = typeof preference === "object" ? preference?.value : preference;
+                            const optionLabel = typeof preference === "object" ? preference?.label : preference;
+                            const normalizedValue = String(optionValue ?? "");
+                            const isSelected = selectedLookingFor.includes(normalizedValue);
+
+                            if (!normalizedValue) return null;
+
+                            return (
+                                <Chip
+                                    key={normalizedValue}
+                                    label={String(optionLabel ?? normalizedValue)}
+                                    onClick={() =>
+                                        setSelectedLookingFor((currentPreferences) =>
+                                            isSelected
+                                                ? currentPreferences.filter((value) => value !== normalizedValue)
+                                                : [...currentPreferences, normalizedValue]
+                                        )
+                                    }
+                                    variant={isSelected ? "filled" : "outlined"}
+                                    sx={{
+                                        px: 1,
+                                        py: 0.5,
+                                        fontSize: 14,
+                                        fontWeight: 600,
+                                        borderRadius: 2,
+                                        borderColor: isSelected ? "transparent" : "rgba(255,255,255,0.25)",
+                                        background: isSelected
+                                            ? "linear-gradient(135deg, #546efd 0%, #a377f0 35%, #f48fb1 100%)"
+                                            : "rgba(255,255,255,0.04)",
+                                        color: "#fff",
+                                        ".MuiChip-label": { px: 1.25 },
+                                        "&:hover": {
+                                            background: isSelected
+                                                ? "linear-gradient(135deg, #6478ff 0%, #a884ff 35%, #f7a0bf 100%)"
+                                                : "rgba(255,255,255,0.1)",
+                                        },
+                                    }}
+                                />
+                            );
+                        })}
+                    </Box>
+                </Box>
+
+                <Box sx={{ width: "100%", mt: 1 }}>
+                    <Typography sx={{ color: "#fff", fontSize: 16, mb: 1.5 }}>Age preference</Typography>
+
+                    <Box sx={{ mb: 2 }}>
+                        <Typography sx={{ color: "rgba(255,255,255,0.8)", fontSize: 14, mb: 1 }}>
+                            Minimum age: {minAgePreference}
+                        </Typography>
+                        <Slider
+                            value={minAgePreference}
+                            onChange={(_, value) => {
+                                const nextMin = Number(value);
+                                setMinAgePreference(nextMin);
+                                if (nextMin > maxAgePreference) {
+                                    setMaxAgePreference(nextMin);
+                                }
+                            }}
+                            min={18}
+                            max={55}
+                            step={1}
+                            valueLabelDisplay="auto"
+                            sx={{
+                                color: "#c4b5fd",
+                                "& .MuiSlider-thumb": { backgroundColor: "#fff" },
+                                "& .MuiSlider-rail": { backgroundColor: "rgba(255,255,255,0.2)" },
+                            }}
+                        />
+                    </Box>
+
+                    <Box>
+                        <Typography sx={{ color: "rgba(255,255,255,0.8)", fontSize: 14, mb: 1 }}>
+                            Maximum age: {maxAgePreference}
+                        </Typography>
+                        <Slider
+                            value={maxAgePreference}
+                            onChange={(_, value) => {
+                                const nextMax = Number(value);
+                                setMaxAgePreference(nextMax);
+                                if (nextMax < minAgePreference) {
+                                    setMinAgePreference(nextMax);
+                                }
+                            }}
+                            min={18}
+                            max={55}
+                            step={1}
+                            valueLabelDisplay="auto"
+                            sx={{
+                                color: "#a5f3fc",
+                                "& .MuiSlider-thumb": { backgroundColor: "#fff" },
+                                "& .MuiSlider-rail": { backgroundColor: "rgba(255,255,255,0.2)" },
+                            }}
+                        />
+                    </Box>
+                </Box>
+            </Stack>
+
+            {errorMessage ? (
+                <Typography sx={{ mt: 2, color: "#ffb4b4" }}>{errorMessage}</Typography>
+            ) : null}
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={submitting}
+                    sx={{
+                        px: 4,
+                        py: 1.2,
+                        borderRadius: 2,
+                        background: "linear-gradient(135deg, #546efd 0%, #a377f0 35%, #f48fb1 100%)",
+                        boxShadow: "0 16px 28px rgba(99, 102, 241, 0.35)",
+                        fontWeight: 700,
+                        textTransform: "none",
+                        "&:hover": {
+                            background: "linear-gradient(135deg, #5c73ff 0%, #9a74f5 35%, #f59ec3 100%)",
+                        },
+                    }}
+                >
+                    {submitting ? "Saving..." : "Save Preference"}
+                </Button>
+            </Box>
+        </Box>
+    );
+}
 
 export default CompleteProfile;
