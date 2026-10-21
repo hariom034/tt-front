@@ -327,7 +327,7 @@ function Gender({ profileUser }) {
 
         try {
             const payload = {
-                page: "sexual-orientation",
+                page: "gender",
                 sexualOrientation: selectedSexualOrientation,
             };
 

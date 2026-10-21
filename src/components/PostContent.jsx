@@ -44,11 +44,11 @@ export default function PostContent({ loading = false, profileUser = {} }) {
     <>
       <Stack
         direction="column"
-        alignItems="center"
-        justifyContent="center"
         spacing={0.5}
         sx={{
           width: "100%",
+          alignItems: "center",
+          justifyContent: "center",
           textAlign: "center",
           backgroundColor: "#090a0f",
           color: "white",
@@ -88,11 +88,11 @@ export default function PostContent({ loading = false, profileUser = {} }) {
 
         <Stack
           direction="column"
-          alignItems="center"
-          justifyContent="center"
           spacing={0.5}
           sx={{
             textAlign: "center",
+            alignItems: "center",
+            justifyContent: "center",
             backgroundColor: "#090a0f",
             color: "white",
             width: "100%",
@@ -287,7 +287,7 @@ function Interest({ loading = false, profileUser = {} }) {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 760, px: 2, py: 3 }}>
-      <Stack spacing={3} alignItems="flex-start" sx={{ width: "100%" }}>
+      <Stack spacing={3} sx={{ width: "100%", alignItems: "flex-start" }}>
         {interests.length ? (
           interests.map((group, groupIndex) => {
             const values = Array.isArray(group?.values) ? group.values : [];
@@ -346,7 +346,7 @@ function Lifestyle({ loading = false, profileUser = {} }) {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 760, px: 2, py: 3 }}>
-      <Stack spacing={3} alignItems="flex-start" sx={{ width: "100%" }}>
+      <Stack spacing={3} sx={{ width: "100%", alignItems: "flex-start" }}>
         {lifestyleGroups.length ? (
           lifestyleGroups.map((group, groupIndex) => {
             const values = Array.isArray(group?.values) ? group.values : [];

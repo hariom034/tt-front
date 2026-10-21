@@ -104,8 +104,6 @@ export default function EditProfile({ loading = true, profileData = {}, handleBa
 
             <Stack
                 direction="column"
-                alignItems="center"
-                justifyContent="center"
                 sx={{
                     width: "100%",
                     height: "100%",
@@ -113,7 +111,9 @@ export default function EditProfile({ loading = true, profileData = {}, handleBa
                     padding: "10px 0px 10px 0px",
                     backgroundColor: "#fff",
                     margin: "8px 0px 8px 0px",
-                    borderRadius: "6px"
+                    borderRadius: "6px",
+                    alignItems: "center",
+                    justifyContent: "center"
                 }}
                 px={{ xs: 1.5, sm: 1.8 }}
                 py={1.2}
@@ -140,9 +140,8 @@ export default function EditProfile({ loading = true, profileData = {}, handleBa
 
                 <Stack
                     direction="column"
-                    alignItems="center"
-                    justifyContent="center"
                     spacing={0.5}
+                    sx={{ alignItems: "center", justifyContent: "center" }}
                 >
                     {loading ? (
                         <>
@@ -181,8 +180,6 @@ export default function EditProfile({ loading = true, profileData = {}, handleBa
 
             <Stack
                 direction="column"
-                alignItems="center"
-                justifyContent="center"
                 sx={{
                     width: "100%",
                     height: "100%",
@@ -190,7 +187,9 @@ export default function EditProfile({ loading = true, profileData = {}, handleBa
                     padding: "10px 0px 10px 0px",
                     backgroundColor: "#1d1e22",
                     margin: "8px 0px 8px 0px",
-                    borderRadius: "6px"
+                    borderRadius: "6px",
+                    alignItems: "center",
+                    justifyContent: "center"
                 }}
                 px={{ xs: 1.5, sm: 1.8 }}
                 py={1.2}

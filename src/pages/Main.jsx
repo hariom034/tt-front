@@ -3,39 +3,51 @@ import {
   Button,
   CircularProgress,
   Divider,
+  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import Sidebar from "../components/Sidebar";
 import MobileNav from "../components/MobileNav";
 import Filter from "../components/Filter";
 import PostCard from "../components/PostCard";
-import { apiGet, apiPost } from "../api/api";
-import { useState, useEffect } from "react";
+import { apiGet } from "../api/api";
+import { useState, useEffect, useRef } from "react";
 import CompleteProfile from "./CompleteProfile";
 
-function hasUserLocation(profileUser = {}) {
+function getLocationValues(location = {}) {
   const latitude =
-    profileUser?.latitude ??
-    profileUser?.lat ??
-    profileUser?.location?.latitude ??
-    profileUser?.location?.lat ??
-    profileUser?.location?.coordinates?.latitude ??
-    profileUser?.location?.coordinates?.lat ??
-    profileUser?.coordinates?.latitude ??
-    profileUser?.coordinates?.lat;
+    location?.latitude ??
+    location?.lat ??
+    location?.location?.latitude ??
+    location?.location?.lat ??
+    location?.location?.coordinates?.latitude ??
+    location?.location?.coordinates?.lat ??
+    location?.coordinates?.latitude ??
+    location?.coordinates?.lat;
 
   const longitude =
-    profileUser?.longitude ??
-    profileUser?.lng ??
-    profileUser?.location?.longitude ??
-    profileUser?.location?.lng ??
-    profileUser?.location?.coordinates?.longitude ??
-    profileUser?.location?.coordinates?.lng ??
-    profileUser?.coordinates?.longitude ??
-    profileUser?.coordinates?.lng;
+    location?.longitude ??
+    location?.lng ??
+    location?.location?.longitude ??
+    location?.location?.lng ??
+    location?.location?.coordinates?.longitude ??
+    location?.location?.coordinates?.lng ??
+    location?.coordinates?.longitude ??
+    location?.coordinates?.lng;
+
+  return {
+    latitude,
+    longitude,
+  };
+}
+
+function hasUserLocation(location = {}) {
+  const { latitude, longitude } = getLocationValues(location);
 
   return (
     latitude !== undefined &&
@@ -72,6 +84,38 @@ async function getLocationPermissionState() {
 const MATCH_SUGGESTIONS_CACHE_KEY = "matchSuggestionsCache";
 const MATCH_SUGGESTIONS_CACHE_TTL = 5 * 60 * 1000;
 
+function normalizeSuggestionsPayload(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.suggestions)) {
+    return payload.suggestions;
+  }
+
+  if (Array.isArray(payload?.profiles)) {
+    return payload.profiles;
+  }
+
+  if (Array.isArray(payload?.data?.suggestions)) {
+    return payload.data.suggestions;
+  }
+
+  if (Array.isArray(payload?.data?.profiles)) {
+    return payload.data.profiles;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload?.items)) {
+    return payload.items;
+  }
+
+  return [];
+}
+
 function readMatchSuggestionsCache() {
   if (typeof window === "undefined") {
     return null;
@@ -86,7 +130,14 @@ function readMatchSuggestionsCache() {
     const parsed = JSON.parse(cached);
     const now = Date.now();
 
-    if (!parsed?.data || !parsed?.timestamp) {
+    if (!parsed?.timestamp) {
+      return null;
+    }
+
+    const cachedSuggestions = normalizeSuggestionsPayload(parsed.data ?? parsed);
+
+    if (!Array.isArray(cachedSuggestions) || cachedSuggestions.length === 0) {
+      window.localStorage.removeItem(MATCH_SUGGESTIONS_CACHE_KEY);
       return null;
     }
 
@@ -95,7 +146,7 @@ function readMatchSuggestionsCache() {
       return null;
     }
 
-    return parsed.data;
+    return cachedSuggestions;
   } catch (error) {
     console.error("Error reading match suggestions cache:", error);
     return null;
@@ -107,105 +158,143 @@ function writeMatchSuggestionsCache(data) {
     return;
   }
 
+  const suggestions = normalizeSuggestionsPayload(data);
+
+  if (!Array.isArray(suggestions) || suggestions.length === 0) {
+    return;
+  }
+
   try {
     window.localStorage.setItem(
       MATCH_SUGGESTIONS_CACHE_KEY,
       JSON.stringify({
-        data,
+        data: suggestions,
         timestamp: Date.now(),
+        fetchedAt: new Date().toISOString(),
       })
     );
+
   } catch (error) {
     console.error("Error writing match suggestions cache:", error);
   }
 }
 
-function renderLocationGate({
-  profileUser,
-  locationLoading,
-  locationError,
-  onUseLocation,
-}) {
-  if (profileUser?.profileStage !== "completed") {
-    return null;
-  }
-
-  if (!hasUserLocation(profileUser)) {
-    return (
-      <LocationPrompt
-        loading={locationLoading}
-        error={locationError}
-        onUseLocation={onUseLocation}
-      />
-    );
-  }
-
-  return null;
-}
-
 export default function Main() {
   const [profileUser, setProfileUser] = useState(null);
+  const [latestLocation, setLatestLocation] = useState(null);
   const [matchSuggestions, setMatchSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const lastRequestKeyRef = useRef("");
 
   useEffect(() => {
     async function fetchProfile() {
       try {
         setLoading(true);
-        const response = (await apiGet("/get/front-details")).data;
-        console.log("Main fetchProfile response:", response);
-        if (response.success) {
-          setProfileUser(response.data || {});
-        } else {
-          setProfileUser({});
-        }
+        const response = await apiGet("/get/front-details");
+        const profile = response?.data?.success ? response.data.data || {} : {};
+        setProfileUser(profile);
       } catch (error) {
         console.error("Error fetching profile:", error);
         setProfileUser({});
-      } finally {
-        setLoading(false);
       }
     }
 
     fetchProfile();
   }, []);
 
+  const hasAnyLocation =
+    hasUserLocation(latestLocation || {}) || hasUserLocation(profileUser || {});
+
   useEffect(() => {
+    if (!profileUser && !latestLocation) {
+      return;
+    }
+
+    let isMounted = true;
+
     async function fetchMatchSuggestions() {
+      const params = { limit: 20 };
+      const currentLocation = latestLocation ?? profileUser ?? {};
+      const locationExists = hasUserLocation(currentLocation);
+
+      if (locationExists) {
+        params.latitude =
+          currentLocation.latitude ??
+          currentLocation.location?.latitude ??
+          currentLocation.coordinates?.latitude;
+        params.longitude =
+          currentLocation.longitude ??
+          currentLocation.location?.longitude ??
+          currentLocation.coordinates?.longitude;
+      }
+
+      const requestKey = JSON.stringify({
+        limit: params.limit,
+        latitude: params.latitude ?? null,
+        longitude: params.longitude ?? null,
+      });
+
       const cachedSuggestions = readMatchSuggestionsCache();
 
-      console.log("cachedSuggestions",cachedSuggestions);
+      if (Array.isArray(cachedSuggestions) && cachedSuggestions.length > 0) {
+        if (lastRequestKeyRef.current === requestKey) {
+          if (isMounted) {
+            setLoading(false);
+          }
+          return;
+        }
 
-      if (Array.isArray(cachedSuggestions) && cachedSuggestions.length) {
-        setMatchSuggestions(cachedSuggestions);
+        lastRequestKeyRef.current = requestKey;
+
+        if (isMounted) {
+          setMatchSuggestions(cachedSuggestions);
+          setLoading(false);
+        }
         return;
       }
 
-      try {
-        const response = await apiGet("/get/random-profiles", { limit: 20 });
-        const payload = response?.data?.data?.profiles ?? response?.data?.profiles ?? [];
-        const suggestions = Array.isArray(payload) ? payload : [];
+      if (lastRequestKeyRef.current === requestKey) {
+        if (isMounted) {
+          setLoading(false);
+        }
+        return;
+      }
 
-        setMatchSuggestions(suggestions);
-        writeMatchSuggestionsCache(suggestions);
-        console.log("Match suggestions response:", response?.data);
+      lastRequestKeyRef.current = requestKey;
+
+      try {
+        const response = await apiGet("/get/match-suggestions", params);
+        const suggestions = normalizeSuggestionsPayload(response?.data ?? response);
+
+        if (isMounted) {
+          setMatchSuggestions(suggestions);
+          if (suggestions.length > 0) {
+            writeMatchSuggestionsCache(suggestions);
+          }
+        }
       } catch (error) {
         console.error("Error fetching match suggestions:", error);
-        setMatchSuggestions([]);
+        if (isMounted) {
+          setMatchSuggestions([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchMatchSuggestions();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profileUser, latestLocation]);
 
   useEffect(() => {
-    if (!profileUser || profileUser.profileStage !== "completed") {
-      return;
-    }
-
-    if (hasUserLocation(profileUser)) {
+    if (hasAnyLocation || locationLoading) {
       return;
     }
 
@@ -226,7 +315,7 @@ export default function Main() {
     return () => {
       isMounted = false;
     };
-  }, [profileUser?.profileStage, profileUser?.latitude, profileUser?.longitude]);
+  }, [hasAnyLocation, locationLoading]);
 
   const handleUseLocation = () => {
     if (!navigator.geolocation) {
@@ -238,34 +327,27 @@ export default function Main() {
     setLocationError("");
 
     navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
+      ({ coords }) => {
         const nextLatitude = coords.latitude;
         const nextLongitude = coords.longitude;
 
-        try {
-          await apiPost("/save-location", {
-            latitude: nextLatitude,
-            longitude: nextLongitude,
-          });
+        const nextLocation = {
+          latitude: nextLatitude,
+          longitude: nextLongitude,
+        };
 
-          setProfileUser((currentUser) => ({
-            ...currentUser,
+        setLatestLocation(nextLocation);
+        setProfileUser((currentUser) => ({
+          ...currentUser,
+          latitude: nextLatitude,
+          longitude: nextLongitude,
+          location: {
+            ...(currentUser?.location || {}),
             latitude: nextLatitude,
             longitude: nextLongitude,
-            location: {
-              ...(currentUser?.location || {}),
-              latitude: nextLatitude,
-              longitude: nextLongitude,
-            },
-          }));
-        } catch (error) {
-          console.error("Error saving location:", error);
-          setLocationError(
-            "Location could not be saved. Please try again."
-          );
-        } finally {
-          setLocationLoading(false);
-        }
+          },
+        }));
+        setLocationLoading(false);
       },
       (error) => {
         console.error("Location access error:", error);
@@ -282,15 +364,18 @@ export default function Main() {
     );
   };
 
-  const locationGate = renderLocationGate({
-    profileUser,
-    locationLoading,
-    locationError,
-    onUseLocation: handleUseLocation,
-  });
+  const shouldShowLocationPrompt =
+    !loading && !hasAnyLocation && !locationLoading && !locationError;
 
-  console.log("Main profileUser:", profileUser);
-  console.log("Match suggestions:", matchSuggestions);
+  if (shouldShowLocationPrompt || locationError) {
+    return (
+      <LocationPrompt
+        loading={locationLoading}
+        error={locationError}
+        onUseLocation={handleUseLocation}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -303,7 +388,7 @@ export default function Main() {
             "radial-gradient(circle at top, rgba(167, 139, 250, 0.18), transparent 35%), linear-gradient(135deg, #091214 0%, #0d1719 35%, #111827 100%)",
         }}
       >
-        <Stack alignItems="center" spacing={2}>
+        <Stack spacing={2} sx={{ alignItems: "center" }}>
           <CircularProgress
             size={42}
             sx={{
@@ -319,18 +404,28 @@ export default function Main() {
     );
   }
 
-  if (locationGate) {
-    return locationGate;
-  }
-
   if (profileUser?.profileStage == "completed") {
-    return <Welcome profileUser={profileUser} loading={loading} />;
+    return (
+      <Welcome
+        profileUser={profileUser}
+        loading={loading}
+        suggestions={matchSuggestions}
+        onSuggestionSwipe={(nextDeck) => {
+          setMatchSuggestions(nextDeck);
+          if (Array.isArray(nextDeck) && nextDeck.length > 0) {
+            writeMatchSuggestionsCache(nextDeck);
+          } else {
+            window.localStorage.removeItem(MATCH_SUGGESTIONS_CACHE_KEY);
+          }
+        }}
+      />
+    );
   }
 
   return <CompleteProfile profileUser={profileUser} />;
 }
 
-function Welcome({ profileUser = {}, loading = false }) {
+function Welcome({ profileUser = {}, loading = false, suggestions = [], onSuggestionSwipe }) {
   return (
     <Box className="app">
       <Sidebar />
@@ -339,11 +434,272 @@ function Welcome({ profileUser = {}, loading = false }) {
         <Box className="feed">
           <Filter />
           <Divider sx={{ display: { xs: "none", sm: "block" } }} />
-          <PostCard loading={loading} profileUser={profileUser} />
+          <PostDeck suggestions={suggestions} loading={loading} onSuggestionSwipe={onSuggestionSwipe} />
         </Box>
       </Box>
 
       <MobileNav />
+    </Box>
+  );
+}
+
+function PostDeck({ suggestions = [], loading = false, onSuggestionSwipe }) {
+  const [deck, setDeck] = useState(Array.isArray(suggestions) ? suggestions : []);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const pointerStart = useRef(0);
+  const dragXRef = useRef(0);
+
+  useEffect(() => {
+    setDeck(Array.isArray(suggestions) ? suggestions : []);
+  }, [suggestions]);
+
+  const currentSuggestion = Array.isArray(deck) ? deck[0] : null;
+
+  const resetDrag = () => {
+    setDragging(false);
+    setDragX(0);
+    dragXRef.current = 0;
+  };
+
+  const handleSwipe = (direction) => {
+
+    
+    if (!currentSuggestion) {
+      return;
+    }
+    
+    console.log(direction);
+    console.log(direction === "left" ? "swipe left" : "swipe right");
+
+    const nextDeck = deck.slice(1);
+    setDeck(nextDeck);
+    onSuggestionSwipe?.(nextDeck);
+    resetDrag();
+  };
+
+  const handlePointerDown = (event) => {
+    if (!currentSuggestion) {
+      return;
+    }
+
+    event.preventDefault();
+    setDragging(true);
+    pointerStart.current = event.clientX;
+    dragXRef.current = 0;
+    setDragX(0);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    if (!currentSuggestion || !dragging) {
+      return;
+    }
+
+    const delta = event.clientX - pointerStart.current;
+    const nextDragX = Math.max(-200, Math.min(200, delta));
+    dragXRef.current = nextDragX;
+    setDragX(nextDragX);
+  };
+
+  const handlePointerUp = () => {
+    if (!currentSuggestion || !dragging) {
+      return;
+    }
+
+    const currentDragX = dragXRef.current;
+
+    if (currentDragX > 100) {
+      handleSwipe("right");
+      return;
+    }
+
+    if (currentDragX < -100) {
+      handleSwipe("left");
+      return;
+    }
+
+    resetDrag();
+  };
+
+  if (!currentSuggestion) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 420,
+          borderRadius: 4,
+          background: "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.10))",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: "#fff",
+          fontSize: 15,
+          fontWeight: 600,
+        }}
+      >
+        No profiles available.
+      </Box>
+    );
+  }
+
+  const rotation = dragX / 18;
+
+  return (
+    <Box
+      sx={{
+        position: "relative",
+        width: "100%",
+        maxWidth: 520,
+        mx: "auto",
+        minHeight: 620,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        userSelect: "none",
+      }}
+    >
+      <Box
+        sx={{
+          position: "relative",
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+        }}
+      >
+        <Box
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          sx={{
+            position: "relative",
+            width: "100%",
+            transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
+            transition: dragging ? "none" : "transform 0.2s ease",
+            touchAction: "pan-y",
+            willChange: "transform",
+          }}
+        >
+          <PostCard loading={loading} profileUser={currentSuggestion} />
+        </Box>
+
+        {dragX > 70 && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 24,
+              left: 28,
+              px: 1.25,
+              py: 0.4,
+              borderRadius: 999,
+              border: "2px solid #22c55e",
+              color: "#22c55e",
+              fontWeight: 800,
+              letterSpacing: 1,
+              background: "rgba(34,197,94,0.12)",
+              transform: "rotate(-18deg)",
+            }}
+          >
+            LIKE
+          </Box>
+        )}
+
+        {dragX < -70 && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 24,
+              right: 28,
+              px: 1.25,
+              py: 0.4,
+              borderRadius: 999,
+              border: "2px solid #ef4444",
+              color: "#ef4444",
+              fontWeight: 800,
+              letterSpacing: 1,
+              background: "rgba(239,68,68,0.12)",
+              transform: "rotate(18deg)",
+            }}
+          >
+            PASS
+          </Box>
+        )}
+      </Box>
+
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{
+          position: "sticky",
+          bottom: 0,
+          width: "100%",
+          justifyContent: "space-between",
+          alignItems: "center",
+          px: 2,
+          pb: 1.5,
+          pt: 1,
+          zIndex: 2,
+          background: "linear-gradient(180deg, rgba(9, 16, 22, 0) 0%, rgba(9, 16, 22, 0.9) 25%, rgba(9, 16, 22, 1) 100%)",
+        }}
+      >
+        <IconButton
+          aria-label="pass"
+          onClick={() => handleSwipe("left")}
+          sx={{
+            width: 68,
+            height: 68,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04))",
+            color: "#f87171",
+            border: "1px solid rgba(248,113,113,0.5)",
+            boxShadow: "0 12px 28px rgba(248, 113, 113, 0.22)",
+            transition: "all 0.22s ease",
+            transform: "translateY(0)",
+            animation: "passPulse 1.8s ease-in-out infinite",
+            "&:hover": {
+              transform: "translateY(-2px) scale(1.04)",
+              background: "linear-gradient(135deg, rgba(248,113,113,0.18), rgba(127,29,29,0.18))",
+            },
+            "@keyframes passPulse": {
+              "0%, 100%": { boxShadow: "0 10px 24px rgba(248, 113, 113, 0.18)" },
+              "50%": { boxShadow: "0 14px 30px rgba(248, 113, 113, 0.38)" },
+            },
+          }}
+        >
+          <CloseIcon sx={{ fontSize: 34 }} />
+        </IconButton>
+
+        <IconButton
+          aria-label="like"
+          onClick={() => handleSwipe("right")}
+          sx={{
+            width: 68,
+            height: 68,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, rgba(34,197,94,0.26), rgba(16,185,129,0.14))",
+            color: "#4ade80",
+            border: "1px solid rgba(74,222,128,0.55)",
+            boxShadow: "0 12px 28px rgba(34, 197, 94, 0.22)",
+            transition: "all 0.22s ease",
+            transform: "translateY(0)",
+            animation: "likePulse 1.8s ease-in-out infinite",
+            "&:hover": {
+              transform: "translateY(-2px) scale(1.04)",
+              background: "linear-gradient(135deg, rgba(34,197,94,0.32), rgba(16,185,129,0.22))",
+            },
+            "@keyframes likePulse": {
+              "0%, 100%": { boxShadow: "0 10px 24px rgba(34, 197, 94, 0.18)" },
+              "50%": { boxShadow: "0 14px 30px rgba(34, 197, 94, 0.38)" },
+            },
+          }}
+        >
+          <FavoriteIcon sx={{ fontSize: 32 }} />
+        </IconButton>
+      </Stack>
     </Box>
   );
 }
@@ -382,7 +738,7 @@ function LocationPrompt({ loading = false, error = "", onUseLocation }) {
             color: "#fff",
           }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <LocationOnIcon sx={{ fontSize: 28, color: "#fff" }} />
             <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
               Enable your location

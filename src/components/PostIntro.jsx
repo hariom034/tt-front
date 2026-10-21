@@ -8,13 +8,13 @@ export default function PostIntro({ loading = false, profileUser = {} }) {
   return (
     <Stack
       direction="column"
-      alignItems="center"
-      justifyContent="center"
       sx={{
         width: "100%",
         height: "100%",
         textAlign: "center",
         padding: "10px 0px 10px 0px",
+        alignItems: "center",
+        justifyContent: "center",
       }}
       px={{ xs: 1.5, sm: 1.8 }}
       py={1.2}
@@ -41,9 +41,8 @@ export default function PostIntro({ loading = false, profileUser = {} }) {
 
       <Stack
         direction="column"
-        alignItems="center"
-        justifyContent="center"
         spacing={0.5}
+        sx={{ alignItems: "center", justifyContent: "center" }}
       >
         {loading ? (
           <>
